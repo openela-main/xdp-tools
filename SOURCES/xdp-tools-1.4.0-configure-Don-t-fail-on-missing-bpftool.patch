@@ -1,4 +1,4 @@
-From 06f6eb8596cd4feb52f4c3aed7aa0e2d8b3353a7 Mon Sep 17 00:00:00 2001
+From 7760d84998f1fd042b3842f598296efe264fc385 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Toke=20H=C3=B8iland-J=C3=B8rgensen?= <toke@redhat.com>
 Date: Thu, 9 Feb 2023 17:57:41 +0100
 Subject: [PATCH] configure: Don't fail on missing bpftool
@@ -14,9 +14,9 @@ Signed-off-by: Toke Høiland-Jørgensen <toke@redhat.com>
 ---
  Makefile                |  8 +++++++-
  configure               |  9 +++++----
- lib/testing/test-tool.c |  2 ++
- lib/util/util.mk        | 12 ++++++++++--
- 4 files changed, 24 insertions(+), 7 deletions(-)
+ lib/testing/test-tool.c |  4 ++++
+ lib/util/util.mk        | 13 +++++++++++--
+ 4 files changed, 27 insertions(+), 7 deletions(-)
 
 diff --git a/Makefile b/Makefile
 index 5c22e854db8d..d5dc21fb076c 100644
@@ -39,7 +39,7 @@ index 5c22e854db8d..d5dc21fb076c 100644
  .PHONY: check_submodule help clobber distclean clean install test libxdp $(SUBDIRS)
  
 diff --git a/configure b/configure
-index 016c5bbd682e..581cd77d996f 100755
+index c32790cc361d..4bdb66b8b761 100755
 --- a/configure
 +++ b/configure
 @@ -71,7 +71,7 @@ check_toolchain()
@@ -55,8 +55,8 @@ index 016c5bbd682e..581cd77d996f 100755
          exit 1
      fi
  
--    if $BPFTOOL gen help 2>&1 | grep 'gen help' > /dev/null; then
-+    if command -v $BPFTOOL &>/dev/null && $BPFTOOL gen help 2>&1 | grep 'gen help' > /dev/null; then
+-    if $BPFTOOL gen help 2>&1 | grep 'gen skeleton.*name' > /dev/null; then
++    if command -v $BPFTOOL &>/dev/null && $BPFTOOL gen help 2>&1 | grep 'gen skeleton.*name' > /dev/null; then
          bpftool_version=$($BPFTOOL version | head -n 1)
  	echo "using $bpftool_version"
      else
@@ -76,10 +76,10 @@ index 016c5bbd682e..581cd77d996f 100755
  
  check_zlib()
 diff --git a/lib/testing/test-tool.c b/lib/testing/test-tool.c
-index 7e2a82890f68..30acb835f9c3 100644
+index 3dd5270af95f..95f76cb36573 100644
 --- a/lib/testing/test-tool.c
 +++ b/lib/testing/test-tool.c
-@@ -212,7 +212,9 @@ int do_probe(const void *cfg, __unused const char *pin_root_path)
+@@ -205,10 +205,14 @@ int do_probe(const void *cfg, __unused const char *pin_root_path)
  
  	switch (opt->action) {
  	case PROBE_CPUMAP_PROGRAM:
@@ -87,15 +87,20 @@ index 7e2a82890f68..30acb835f9c3 100644
  		res = sample_probe_cpumap_compat();
 +#endif
  		break;
+ 	case PROBE_XDP_LOAD_BYTES:
++#ifdef HAVE_BPFTOOL
+ 		res = sample_probe_xdp_load_bytes();
++#endif
+ 		break;
          default:
                  return EXIT_FAILURE;
 diff --git a/lib/util/util.mk b/lib/util/util.mk
-index 7fc3b4345c34..7059cdd5e7dc 100644
+index 2b6a2e08af3b..6c9ebaf00f77 100644
 --- a/lib/util/util.mk
 +++ b/lib/util/util.mk
-@@ -1,2 +1,10 @@
+@@ -1,2 +1,11 @@
 -UTIL_OBJS := params.o logging.o util.o stats.o xpcapng.o xdp_sample.o
--UTIL_BPF_OBJS := xdp_sample.bpf.o
+-UTIL_BPF_OBJS := xdp_sample.bpf.o xdp_load_bytes.bpf.o
 +LIB_DIR ?= ..
 +include $(LIB_DIR)/defines.mk
 +
@@ -104,8 +109,9 @@ index 7fc3b4345c34..7059cdd5e7dc 100644
 +
 +ifneq ($(BPFTOOL),)
 +UTIL_OBJS += xdp_sample.o
-+UTIL_BPF_OBJS += xdp_sample.bpf.o
++UTIL_BPF_OBJS += xdp_sample.bpf.o xdp_load_bytes.bpf.o
 +endif
++
 -- 
-2.39.1
+2.41.0
 
