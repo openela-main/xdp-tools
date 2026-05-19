@@ -1,8 +1,8 @@
 Name:             xdp-tools
-Version:          1.5.5
+Version:          1.6.2
 Release:          1%{?dist}
 Summary:          Utilities and example programs for use with XDP
-%global _soversion 1.5.0
+%global _soversion 1.6.0
 
 License:          GPL-2.0-only
 URL:              https://github.com/xdp-project/%{name}
@@ -13,6 +13,7 @@ BuildRequires:    libbpf-devel
 BuildRequires:    elfutils-libelf-devel
 BuildRequires:    zlib-devel
 BuildRequires:    libpcap-devel
+BuildRequires:    libcap-ng-devel
 BuildRequires:    clang >= 10.0.0
 BuildRequires:    llvm >= 10.0.0
 BuildRequires:    make
@@ -29,9 +30,6 @@ BuildRequires:    bpftool
 # Always keep xdp-tools and libxdp packages in sync
 Requires:         libxdp = %{version}-%{release}
 
-# find-debuginfo produces empty debugsourcefiles.list
-# disable the debug package to avoid rpmbuild error'ing out because of this
-%global debug_package %{nil}
 %global _hardened_build 1
 
 %description
@@ -89,6 +87,7 @@ export MANDIR='%{_mandir}'
 export DATADIR='%{_datadir}'
 export HDRDIR='%{_includedir}/xdp'
 make install V=1
+cd $DESTDIR/$LIBDIR && ln -vs libxdp.so.%{_soversion} libxdp.so.1.5.0
 
 %files
 %{_sbindir}/xdp-filter
@@ -109,6 +108,7 @@ make install V=1
 %files -n libxdp
 %{_libdir}/libxdp.so.1
 %{_libdir}/libxdp.so.%{_soversion}
+%{_libdir}/libxdp.so.1.5.0
 %{_libdir}/bpf/xdp-dispatcher.o
 %{_libdir}/bpf/xsk_def_xdp_prog*.o
 %{_mandir}/man3/*
@@ -123,7 +123,20 @@ make install V=1
 %{_libdir}/pkgconfig/libxdp.pc
 
 %changelog
-* Mon Aug 4 2025 Toke Høiland-Jørgensen <toke@redhat.com> 1.5.5-1
+* Thu Feb 19 2026 Toke Høiland-Jørgensen <toke@redhat.com> 1.6.2-1
+- Upstream version bump
+
+* Wed Jan 7 2026 Toke Høiland-Jørgensen <toke@redhat.com> 1.6.0-1
+- Upstream version bump
+- Drop upstreamed patch
+
+* Fri Oct 3 2025 Toke Høiland-Jørgensen <toke@redhat.com> 1.5.7-1
+- Upstream version bump
+- Add annocheck exceptions for BPF objects (Felix)
+- Re-enable debug builds (Felix)
+- Add libcap-ng-devel to BuildDepends
+
+* Wed Jun 4 2025 Toke Høiland-Jørgensen <toke@redhat.com> 1.5.5-1
 - Upstream version bump
 - Fix build with Clang 20
 
