@@ -1,0 +1,46 @@
+From a4189c7cc2f89eaedd15779325f8207a48100e77 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Toke=20H=C3=B8iland-J=C3=B8rgensen?= <toke@redhat.com>
+Date: Mon, 6 Oct 2025 15:29:26 +0200
+Subject: [PATCH] xdp-filter/tests: Make ndisc6 optional
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+There are systems (notably RHEL) that don's package the ndisc6 utility.
+Instead of failing the entire test suite if the utility is not
+available, just skip that one test if it's not there.
+
+Signed-off-by: Toke Høiland-Jørgensen <toke@redhat.com>
+---
+ lib/testing/test_runner.sh          | 2 +-
+ xdp-filter/tests/test-xdp-filter.sh | 1 +
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/lib/testing/test_runner.sh b/lib/testing/test_runner.sh
+index 8400a8dc4fa5..6e058da158b9 100755
+--- a/lib/testing/test_runner.sh
++++ b/lib/testing/test_runner.sh
+@@ -25,7 +25,7 @@ ALL_TESTS=""
+ VERBOSE_TESTS=${V:-0}
+ NUM_NS=2
+ 
+-NEEDED_TOOLS="capinfos ethtool ip ping sed tc tcpdump timeout tshark nft socat ndisc6 arping"
++NEEDED_TOOLS="capinfos ethtool ip ping sed tc tcpdump timeout tshark nft socat arping"
+ 
+ if [ -f "$TEST_CONFIG" ]; then
+     source "$TEST_CONFIG"
+diff --git a/xdp-filter/tests/test-xdp-filter.sh b/xdp-filter/tests/test-xdp-filter.sh
+index d0135c078e8e..528d09138a3d 100644
+--- a/xdp-filter/tests/test-xdp-filter.sh
++++ b/xdp-filter/tests/test-xdp-filter.sh
+@@ -136,6 +136,7 @@ check_ping6()
+ 
+ check_ndisc6()
+ {
++    command -v ndisc6 || return 0
+     check_packet "icmp6" "ndisc6 -r 1 $OUTSIDE_IP6 -s $INSIDE_IP6 veth0" $1
+ }
+ 
+-- 
+2.50.1
+
